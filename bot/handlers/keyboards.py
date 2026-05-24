@@ -14,6 +14,7 @@ _TOGGLES: list[tuple[str, str]] = [
     ("antiflood_on", "🚦 Anti-flood"),
     ("spam_filter_on", "📢 Spam filtri (beta)"),
     ("bait_filter_on", "🎣 Spam-bot / bait filtri"),
+    ("ai_filter_on", "🧠 AI tahlil (profilga jalb)"),
     ("welcome_on", "👋 Salomlashish"),
     ("delete_service_messages", "🧹 Xizmat xabarlarini o'chirish"),
     ("image_nsfw_on", "🖼 Rasm NSFW (ML)"),

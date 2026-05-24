@@ -11,12 +11,13 @@ from bot.config import get_settings
 from bot.data import messages as msg
 from bot.database import crud
 from bot.filters.is_admin import is_user_admin
-from bot.services import moderator
+from bot.services import ai_moderator, moderator
 from bot.services.account_heuristics import analyze_account
 from bot.services.bait_detector import analyze as analyze_bait
 from bot.services.link_detector import matches_patterns, scan_message
 from bot.services.nsfw_detector import get_detector
 from bot.services.optional_features import scan_media, scan_profile_photo
+from bot.services.profile_inspector import get_profile
 from bot.services.settings_cache import get_cached_settings
 from bot.utils.helpers import user_mention
 from bot.utils.logger import logger
@@ -141,23 +142,50 @@ async def moderate(message: Message, session: AsyncSession) -> None:
             )
             return
 
-    # ---------- 2.5) BAIT / HONEYPOT SPAM-BOT FILTRI ----------
+    # ---------- 2.5) PROFILGA-JALB / BAIT SPAM-BOT FILTRI ----------
     # Kanal izohlariga "Foto profilimda, halol fikring kerak 💞" kabi xabar
-    # tashlab, odamlarni profil/shaxsiyga jalb qiladigan soxta akkauntlar.
+    # tashlab, odamlarni profil/bio havolasi/shaxsiyga jalb qiladigan akkauntlar.
     if gs.get("bait_filter_on", True) and body:
         bait = analyze_bait(body)
-        if bait.is_flagged:
+
+        # --- AI rejimi: kalit bo'lsa va guruhda yoqilgan bo'lsa ---
+        # Arzon ön-filtr: profilda jalb maqsadi (bio havola/kanal) bormi yoki
+        # heuristika shubhalanганmi — shundagina AI'ni chaqiramiz. AI yakuniy
+        # qaror qiladi va FAQAT xabarni o'chiradi (ban emas).
+        if ai_moderator.is_available() and gs.get("ai_filter_on", True):
+            profile = await get_profile(message.bot, user.id)
+            if profile.has_target or bait.is_flagged:
+                acct = analyze_account(user.full_name, user.username)
+                hint_bits = bait.matches[:3] + acct.signals[:2]
+                verdict = await ai_moderator.classify_lure(
+                    body, profile.summary(),
+                    heuristic_hint=", ".join(hint_bits),
+                )
+                if verdict is not None and verdict.is_scam:
+                    await moderator.delete_message(
+                        message.bot, chat_id, message.message_id
+                    )
+                    await moderator.log_action(
+                        message.bot, session, group_id=chat_id, action="delete",
+                        user_id=user.id, user_name=user.full_name,
+                        reason=f"AI: profilga jalb (ishonch={verdict.confidence:.2f}) — "
+                               f"{verdict.reason}",
+                        message_text=body, log_channel_id=log_channel,
+                    )
+                    logger.info(
+                        f"[{chat_id}] AI o'chirdi · user={user.id} · {verdict.reason}"
+                    )
+                    return
+            # AI ishladi-yu toza dedi (yoki maqsad yo'q) — heuristik ban qo'llanmaydi
+        # --- Fallback: AI yo'q bo'lsa, heuristik (ban) ---
+        elif bait.is_flagged:
             severity = bait.severity
             reasons = list(bait.matches[:3])
-
-            # Chegaradagi (sev=1) holatni kuchaytiruvchi qo'shimcha signallar:
-            # 1) Shubhali akkaunt (ismda emoji, username yo'q, ochiq so'z)
             if severity < 3:
                 acct = analyze_account(user.full_name, user.username)
                 if acct.is_suspicious:
                     severity = 3
                     reasons += [f"akkaunt: {s}" for s in acct.signals[:2]]
-            # 2) Profil rasmi NSFW (opsional, og'ir — faqat yoqilgan bo'lsa)
             if severity < 3:
                 pv = await scan_profile_photo(message.bot, user.id, gs)
                 if pv is not None and pv.is_flagged:
@@ -172,7 +200,6 @@ async def moderate(message: Message, session: AsyncSession) -> None:
                     log_channel=log_channel,
                 )
                 return
-            # Hali ham chegaradagi shubha — faqat log, ban qilinmaydi
             await moderator.log_action(
                 message.bot, session, group_id=chat_id, action="warn",
                 user_id=user.id, user_name=user.full_name,

@@ -93,6 +93,16 @@ async def run() -> None:
             "(pip install -r requirements-ml.txt + tesseract binari)"
         )
 
+    # --- AI moderatsiya holati ---
+    from bot.services import ai_moderator
+
+    if ai_moderator.is_available():
+        logger.info(f"AI moderatsiya: yoqilgan (model={settings.ai_model})")
+    elif settings.ai_moderation_enabled and not settings.anthropic_api_key:
+        logger.warning("AI_MODERATION_ENABLED=true, lekin ANTHROPIC_API_KEY yo'q")
+    else:
+        logger.info("AI moderatsiya: o'chiq (heuristikaga fallback)")
+
     # --- Scheduler ---
     scheduler = setup_scheduler(bot, session_factory)
 
