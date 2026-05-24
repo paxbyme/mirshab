@@ -95,6 +95,7 @@ async def on_member_join(event: ChatMemberUpdated, session: AsyncSession) -> Non
     if new_user.id == me.id:
         return  # botning o'zi — my_chat_member orqali keladi, bu yerda emas
 
+    logger.info(f"[{chat_id}] Yangi a'zo (chat_member) · user={new_user.id}")
     await crud.get_or_create_group(session, chat_id, event.chat.title or "")
     gs = await get_cached_settings(session, chat_id)
     settings = get_settings()
@@ -210,6 +211,7 @@ async def _start_captcha(
             reply_markup=kb,
         )
         captcha_manager.set_message_id(chat_id, user.id, sent.message_id)
+        logger.info(f"[{chat_id}] CAPTCHA yuborildi · user={user.id}")
     except Exception as e:  # noqa: BLE001
         logger.warning(f"CAPTCHA yuborilmadi: {e}")
         captcha_manager.cancel(chat_id, user.id)
