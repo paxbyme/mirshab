@@ -34,3 +34,8 @@ logs/
 .idea/
 .vscode/
 .DS_Store
+
+# --- Private files ---
+
+CLAUDE.md
+PLAN.md

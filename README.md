@@ -17,12 +17,14 @@ yangi a'zolarni CAPTCHA bilan tekshiradi va adminlarga statistika beradi.
 | 🔞 **18+ filtri** | Kalit so'zlar lug'ati (uz/ru/en) + username/forward pattern'lari; severity tizimi |
 | 🛡 **CAPTCHA** | Yangi a'zo uchun matematik tekshiruv (timeout'da kick) |
 | 🤖 **Bot himoyasi** | Admin qo'shmagan botlar avtomatik ban |
+| 🎣 **Spam-bot / bait filtri** | Kanal izohlaridagi "profilga jalb qiluvchi" honeypot botlar (uz/ru): profilga ishora + fikr so'rash + ochiq kiyim + emoji kombinatsiyasi → ban |
+| 🕵️ **Akkaunt heuristikasi** | Shubhali ism (flirt emoji), username yo'qligi, ochiq so'zlar — chegaradagi bait shubhasini kuchaytiradi |
 | 🚦 **Anti-flood** | Tez xabar yuborgan a'zoni vaqtincha mute |
 | ⚖️ **Warning tizimi** | N ogohlantirishdan keyin avtomatik ban |
 | ⚙️ **Admin panel** | Inline `/settings` menyu, guruh bo'yicha sozlamalar |
 | 📊 **Statistika va log** | `/stats`, `/logs`, log kanal, kunlik hisobot |
-| 🖼 **(opsional) Rasm NSFW** | NudeNet bilan rasm tekshiruvi |
-| 🔍 **(opsional) OCR** | Rasm ichidagi matnda havola/reklama aniqlash |
+| 🖼 **(opsional) Rasm NSFW** | NudeNet bilan rasm **va profil rasmi** tekshiruvi (yangi a'zo / bait yuboruvchi) |
+| 🔍 **(opsional) OCR** | Rasm ichidagi matnda havola/reklama/**bait** aniqlash |
 | 📢 **(opsional) Spam classifier** | Heuristik + scikit-learn |
 | 🌐 **(opsional) Web dashboard** | FastAPI ko'rish-only panel |
 
@@ -127,6 +129,15 @@ pip install -r requirements-ml.txt
 #   macOS:  brew install tesseract
 #   Debian: apt install tesseract-ocr
 ```
+
+> **Docker/Railway:** og'ir ML paketlar standart image'ga kirmaydi. Yoqish uchun
+> build arg bering: `docker build --build-arg INSTALL_ML=true .` (Railway: service
+> Settings → Build → `INSTALL_ML=true`). Bot ishga tushganda log'da
+> `Opsional ML: image_nsfw=... ocr=...` holati ko'rinadi.
+
+Yoqilganda **rasm NSFW** quyidagilarni qoplaydi: xabardagi rasm/sticker,
+**yangi a'zoning profil rasmi** (kirishida ban) va **bait yuboruvchining profil
+rasmi** (chegaradagi shubhani ban'ga ko'taradi).
 
 `.env` da yoqing:
 

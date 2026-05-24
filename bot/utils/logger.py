@@ -35,7 +35,18 @@ def setup_logging(level: str = "INFO") -> None:
         "<level>{level: <8}</level> | "
         "<cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>"
     )
-    logger.add(sys.stderr, level=level.upper(), format=fmt, colorize=True)
+    # Oqimlarni darajaga qarab ajratamiz: Railway stderr'dan kelgan hamma narsani
+    # "xato" deb qizil ko'rsatadi. Shuning uchun oddiy loglar (INFO/WARNING) stdout'ga,
+    # faqat ERROR+ stderr'ga boradi.
+    error_no = logger.level("ERROR").no
+    logger.add(
+        sys.stdout,
+        level=level.upper(),
+        format=fmt,
+        colorize=True,
+        filter=lambda record: record["level"].no < error_no,
+    )
+    logger.add(sys.stderr, level="ERROR", format=fmt, colorize=True)
     logger.add(
         "logs/mirshab_{time:YYYY-MM-DD}.log",
         level=level.upper(),
