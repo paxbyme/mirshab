@@ -17,6 +17,7 @@ from bot.database import engine as db_engine
 from bot.filters.is_admin import is_user_admin
 from bot.services import moderator
 from bot.services.captcha import captcha_manager
+from bot.services.optional_features import scan_profile_photo
 from bot.services.settings_cache import get_cached_settings
 from bot.utils.helpers import until_from_seconds, user_mention
 from bot.utils.logger import logger
@@ -155,6 +156,28 @@ async def _process_member(
         return
 
     # --- Oddiy foydalanuvchi ---
+    # Profil rasmi NSFW (opsional, og'ir) — bait/spam akkauntlarni kirishida ushlaydi
+    pfp = await scan_profile_photo(bot, new_user.id, gs)
+    if pfp is not None and pfp.is_flagged:
+        if await moderator.ban_user(bot, chat_id, new_user.id):
+            await crud.set_banned(session, chat_id, new_user.id, True)
+            try:
+                await bot.send_message(
+                    chat_id,
+                    msg.BANNED.format(
+                        user=user_mention(new_user), reason="profil rasmi 18+"
+                    ),
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            await moderator.log_action(
+                bot, session, group_id=chat_id, action="ban",
+                user_id=new_user.id, user_name=new_user.full_name,
+                reason="profil rasmi 18+ (yangi a'zo)",
+                log_channel_id=gs.get("log_channel_id"),
+            )
+        return
+
     if gs.get("captcha_on", True):
         await _start_captcha(bot, chat_id, new_user, settings.captcha_timeout_seconds, gs)
     elif gs.get("welcome_on", True):

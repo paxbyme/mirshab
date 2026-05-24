@@ -11,6 +11,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from aiogram import Bot
 from aiogram.types import Message
 
 from bot.config import get_settings
@@ -113,6 +114,54 @@ def _check_image_nsfw(path: Path) -> MediaVerdict:
     return MediaVerdict()
 
 
+async def _download_profile_photo(bot: Bot, user_id: int) -> Path | None:
+    """Foydalanuvchining eng katta profil rasmini vaqtinchalik faylga yuklaydi."""
+    try:
+        photos = await bot.get_user_profile_photos(user_id, limit=1)
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Profil rasmini olib bo'lmadi (user={user_id}): {e}")
+        return None
+    if not photos.total_count or not photos.photos or not photos.photos[0]:
+        return None
+    file_id = photos.photos[0][-1].file_id
+    try:
+        tg_file = await bot.get_file(file_id)
+        tmp = Path(tempfile.gettempdir()) / f"mirshab_pfp_{user_id}.jpg"
+        await bot.download_file(tg_file.file_path, destination=tmp)
+        return tmp
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Profil rasmini yuklab bo'lmadi (user={user_id}): {e}")
+        return None
+
+
+async def scan_profile_photo(
+    bot: Bot, user_id: int, group_settings: dict
+) -> MediaVerdict | None:
+    """Foydalanuvchi profil rasmini NSFW uchun tekshiradi (opsional, og'ir).
+
+    image_nsfw o'chiq yoki NudeNet o'rnatilmagan bo'lsa — None.
+    """
+    settings = get_settings()
+    if not (group_settings.get("image_nsfw_on") and settings.image_nsfw_enabled):
+        return None
+    if not _NUDE_AVAILABLE:
+        return None
+    path = await _download_profile_photo(bot, user_id)
+    if path is None:
+        return None
+    try:
+        verdict = _check_image_nsfw(path)
+        if verdict.is_flagged:
+            verdict.reason = "profil rasmi NSFW (NudeNet)"
+            return verdict
+        return None
+    finally:
+        try:
+            path.unlink(missing_ok=True)
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def _ocr_text(path: Path) -> str:
     if not _OCR_AVAILABLE:
         return ""
@@ -150,6 +199,7 @@ async def scan_media(message: Message, group_settings: dict) -> MediaVerdict | N
             text = _ocr_text(path)
             if text.strip():
                 # OCR matnini matn detektorlari bilan tekshiramiz
+                from bot.services.bait_detector import analyze as analyze_bait
                 from bot.services.link_detector import extract_links
                 from bot.services.nsfw_detector import get_detector
 
@@ -159,6 +209,14 @@ async def scan_media(message: Message, group_settings: dict) -> MediaVerdict | N
                         severity=nsfw.severity,
                         reason=f"rasm ichidagi 18+ matn (OCR): {', '.join(nsfw.matches[:3])}",
                         matches=nsfw.matches,
+                    )
+                # Bait botlar matnni rasmga joylab matn filtridan qochadi
+                bait = analyze_bait(text)
+                if bait.severity >= 3:
+                    return MediaVerdict(
+                        severity=3,
+                        reason=f"rasm ichidagi bait matn (OCR): {', '.join(bait.matches[:3])}",
+                        matches=bait.matches,
                     )
                 if extract_links(text).has_any:
                     return MediaVerdict(

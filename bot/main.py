@@ -70,6 +70,29 @@ async def run() -> None:
     for router in get_routers():
         dp.include_router(router)
 
+    # --- Opsional ML imkoniyatlar holati (diagnostika) ---
+    from bot.services.optional_features import features_status
+
+    fs = features_status()
+    logger.info(
+        "Opsional ML: image_nsfw={img} (env={img_env}), ocr={ocr} (env={ocr_env})".format(
+            img="o'rnatilgan" if fs["image_nsfw"] else "yo'q",
+            img_env=settings.image_nsfw_enabled,
+            ocr="o'rnatilgan" if fs["ocr"] else "yo'q",
+            ocr_env=settings.ocr_enabled,
+        )
+    )
+    if settings.image_nsfw_enabled and not fs["image_nsfw"]:
+        logger.warning(
+            "IMAGE_NSFW_ENABLED=true, lekin NudeNet o'rnatilmagan "
+            "(pip install -r requirements-ml.txt / Docker INSTALL_ML=true)"
+        )
+    if settings.ocr_enabled and not fs["ocr"]:
+        logger.warning(
+            "OCR_ENABLED=true, lekin pytesseract/tesseract yo'q "
+            "(pip install -r requirements-ml.txt + tesseract binari)"
+        )
+
     # --- Scheduler ---
     scheduler = setup_scheduler(bot, session_factory)
 

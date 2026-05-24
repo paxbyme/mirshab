@@ -12,9 +12,11 @@ from bot.data import messages as msg
 from bot.database import crud
 from bot.filters.is_admin import is_user_admin
 from bot.services import moderator
+from bot.services.account_heuristics import analyze_account
+from bot.services.bait_detector import analyze as analyze_bait
 from bot.services.link_detector import matches_patterns, scan_message
 from bot.services.nsfw_detector import get_detector
-from bot.services.optional_features import scan_media
+from bot.services.optional_features import scan_media, scan_profile_photo
 from bot.services.settings_cache import get_cached_settings
 from bot.utils.helpers import user_mention
 from bot.utils.logger import logger
@@ -136,6 +138,46 @@ async def moderate(message: Message, session: AsyncSession) -> None:
                 reason=f"18+ kontent: {', '.join(verdict.matches[:3])}",
                 notice=msg.NSFW_DELETED, delete=True,
                 severity=verdict.severity, log_channel=log_channel,
+            )
+            return
+
+    # ---------- 2.5) BAIT / HONEYPOT SPAM-BOT FILTRI ----------
+    # Kanal izohlariga "Foto profilimda, halol fikring kerak 💞" kabi xabar
+    # tashlab, odamlarni profil/shaxsiyga jalb qiladigan soxta akkauntlar.
+    if gs.get("bait_filter_on", True) and body:
+        bait = analyze_bait(body)
+        if bait.is_flagged:
+            severity = bait.severity
+            reasons = list(bait.matches[:3])
+
+            # Chegaradagi (sev=1) holatni kuchaytiruvchi qo'shimcha signallar:
+            # 1) Shubhali akkaunt (ismda emoji, username yo'q, ochiq so'z)
+            if severity < 3:
+                acct = analyze_account(user.full_name, user.username)
+                if acct.is_suspicious:
+                    severity = 3
+                    reasons += [f"akkaunt: {s}" for s in acct.signals[:2]]
+            # 2) Profil rasmi NSFW (opsional, og'ir — faqat yoqilgan bo'lsa)
+            if severity < 3:
+                pv = await scan_profile_photo(message.bot, user.id, gs)
+                if pv is not None and pv.is_flagged:
+                    severity = 3
+                    reasons.append("profil rasmi 18+")
+
+            if severity >= 3:
+                await _punish(
+                    message, session, settings, gs,
+                    reason=f"spam-bot (bait): {', '.join(reasons)}",
+                    notice=msg.BAIT_DELETED, delete=True, severity=3,
+                    log_channel=log_channel,
+                )
+                return
+            # Hali ham chegaradagi shubha — faqat log, ban qilinmaydi
+            await moderator.log_action(
+                message.bot, session, group_id=chat_id, action="warn",
+                user_id=user.id, user_name=user.full_name,
+                reason=f"bait shubhasi (skor={bait.score:.2f}): {', '.join(reasons)}",
+                message_text=body, log_channel_id=log_channel,
             )
             return
 

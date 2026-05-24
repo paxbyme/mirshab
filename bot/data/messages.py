@@ -57,6 +57,10 @@ NSFW_DELETED = (
     "🔞 {user}, nomaqbul kontent aniqlandi. Xabaringiz o'chirildi.\n"
     "Ogohlantirish: <b>{warnings}/{max}</b>"
 )
+BAIT_DELETED = (
+    "🚫 {user}, shubhali (spam-bot / profilga jalb qiluvchi) xabar aniqlandi va "
+    "o'chirildi.\nOgohlantirish: <b>{warnings}/{max}</b>"
+)
 WARNED = "⚠️ {user} ogohlantirildi. ({warnings}/{max})"
 MUTED = "🔇 {user} {duration} davomida ovozsiz qilindi.\nSabab: {reason}"
 UNMUTED = "🔊 {user} ovozi tiklandi."
