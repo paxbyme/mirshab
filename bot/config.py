@@ -100,6 +100,16 @@ class Settings(BaseSettings):
     image_nsfw_enabled: bool = False
     ocr_enabled: bool = False
 
+    # --- AI moderatsiya (Claude — profilga jalb qiluvchi spam-botlar) ---
+    # Kalit bo'lsa va yoqilgan bo'lsa ishlaydi; aks holda heuristikaga fallback.
+    anthropic_api_key: str = ""
+    ai_moderation_enabled: bool = False
+    ai_model: str = "claude-haiku-4-5"
+
+    @property
+    def use_ai_moderation(self) -> bool:
+        return self.ai_moderation_enabled and bool(self.anthropic_api_key)
+
     @field_validator("db_url", mode="after")
     @classmethod
     def _normalize_db_url(cls, v: str) -> str:

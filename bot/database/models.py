@@ -31,6 +31,7 @@ def default_group_settings() -> dict[str, Any]:
         "antiflood_on": True,
         "spam_filter_on": False,  # Faza 7, heuristik (false-positive ehtimoli)
         "bait_filter_on": True,   # honeypot / profil-bait spam-botlar (yuqori ishonch)
+        "ai_filter_on": True,     # AI tahlili (profilga jalb) — kalit bo'lsagina ishlaydi
         "image_nsfw_on": False,   # Faza 7, og'ir
         "ocr_on": False,          # Faza 7
         "welcome_on": True,

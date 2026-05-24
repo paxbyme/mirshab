@@ -10,6 +10,10 @@ redis==5.0.8
 apscheduler==3.10.4
 python-dotenv==1.0.1
 
+# --- AI moderatsiya (Claude) — profilga jalb qiluvchi spam-botlarni aniqlash ---
+# ANTHROPIC_API_KEY berilmasa bot heuristikaga fallback qiladi (majburiy emas).
+anthropic>=0.40.0
+
 # --- Faza 7 (opsional) ---
 # Quyidagilar bo'lmasa ham bot ishlaydi (graceful fallback).
 # Web dashboard:
