@@ -84,7 +84,7 @@ async def _download_photo(message: Message) -> Path | None:
         return None
     try:
         tg_file = await message.bot.get_file(file_id)
-        tmp = Path(tempfile.gettempdir()) / f"qoriqchi_{file_id}.jpg"
+        tmp = Path(tempfile.gettempdir()) / f"mirshab_{file_id}.jpg"
         await message.bot.download_file(tg_file.file_path, destination=tmp)
         return tmp
     except Exception as e:  # noqa: BLE001

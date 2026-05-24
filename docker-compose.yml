@@ -5,7 +5,7 @@ services:
     env_file: .env
     environment:
       # Compose ichida postgres/redis xizmatlariga ulanish
-      DB_URL: postgresql+asyncpg://qoriqchi:${POSTGRES_PASSWORD:-qoriqchi}@db:5432/qoriqchi
+      DB_URL: postgresql+asyncpg://mirshab:${POSTGRES_PASSWORD:-mirshab}@db:5432/mirshab
       REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
@@ -19,13 +19,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: qoriqchi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qoriqchi}
-      POSTGRES_DB: qoriqchi
+      POSTGRES_USER: mirshab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirshab}
+      POSTGRES_DB: mirshab
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qoriqchi"]
+      test: ["CMD-SHELL", "pg_isready -U mirshab"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -37,7 +37,7 @@ def setup_logging(level: str = "INFO") -> None:
     )
     logger.add(sys.stderr, level=level.upper(), format=fmt, colorize=True)
     logger.add(
-        "logs/qoriqchi_{time:YYYY-MM-DD}.log",
+        "logs/mirshab_{time:YYYY-MM-DD}.log",
         level=level.upper(),
         rotation="00:00",
         retention="14 days",

@@ -1,13 +1,15 @@
-"""Qo'riqchi botini ishga tushirish — entry point."""
+"""Mirshab botini ishga tushirish — entry point."""
 
 from __future__ import annotations
 
 import asyncio
+import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
+from pydantic import ValidationError
 
 from bot.config import get_settings
 from bot.database import engine as db_engine
@@ -39,7 +41,7 @@ async def _on_startup(bot: Bot) -> None:
 async def run() -> None:
     settings = get_settings()
     setup_logging(settings.log_level)
-    logger.info("Qo'riqchi ishga tushmoqda...")
+    logger.info("Mirshab ishga tushmoqda...")
 
     # --- DB ---
     session_factory = db_engine.create_session_factory(settings.db_url)
@@ -96,7 +98,33 @@ async def run() -> None:
         await db_engine.dispose_engine()
 
 
+_CONFIG_HELP = """
+╭──────────────────────────────────────────────────────────────╮
+│  ❌ Sozlama xatosi — bot ishga tusha olmadi.                   │
+╰──────────────────────────────────────────────────────────────╯
+
+Quyidagi maydon(lar) to'ldirilmagan: {fields}
+
+Tuzatish:
+  1) `.env` faylini yarating:        cp .env.example .env
+  2) `.env` ichida BOT_TOKEN ni to'ldiring (@BotFather dan oling)
+     va OWNER_IDS ni o'z user_id'ingiz bilan (@userinfobot dan).
+
+Docker bilan:
+  • `.env` fayli loyiha ildizida bo'lishi shart (compose uni o'qiydi).
+  • yoki:  BOT_TOKEN=... OWNER_IDS=... docker compose up -d
+"""
+
+
 def main() -> None:
+    # Sozlamalarni erta tekshiramiz — xom traceback o'rniga tushunarli xabar.
+    try:
+        get_settings()
+    except ValidationError as e:
+        fields = ", ".join(str(err["loc"][0]).upper() for err in e.errors())
+        print(_CONFIG_HELP.format(fields=fields), file=sys.stderr)
+        sys.exit(1)
+
     try:
         asyncio.run(run())
     except (KeyboardInterrupt, SystemExit):

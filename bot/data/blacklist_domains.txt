@@ -1,4 +1,4 @@
-# Qo'riqchi — global qora ro'yxat (domen / kanal pattern'lari)
+# Mirshab — global qora ro'yxat (domen / kanal pattern'lari)
 # Bu yerdagi domenlar BARCHA guruhlarda taqiqlanadi (guruh blacklist'idan tashqari).
 # Har bir guruh o'z qora ro'yxatini /blacklist orqali qo'sha oladi.
 # '#' — izoh. Bo'sh qatorlar e'tiborsiz. Domen kichik harfda.

@@ -1,4 +1,4 @@
-# Qo'riqchi — Telegram Guruh Moderator Boti
+# Mirshab — Telegram Guruh Moderator Boti
 
 ## 1. Loyihaning maqsadi
 
@@ -66,7 +66,7 @@ Telegram ommaviy guruhlarda tarqaladigan reklamalar, 18+ kontent havolalari va s
 ## 4. Loyiha tuzilishi
 
 ```
-Qo'riqchi/
+Mirshab/
 ├── bot/
 │   ├── __init__.py
 │   ├── main.py                  # Botni ishga tushirish entry point

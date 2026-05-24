@@ -1,4 +1,4 @@
-# Qo'riqchi — 18+ / nomaqbul kontent kalit so'zlar lug'ati
+# Mirshab — 18+ / nomaqbul kontent kalit so'zlar lug'ati
 # Format:  so'z|til|severity
 #   til: uz / ru / en
 #   severity: 1 = shubhali (log + ogohlantirish)

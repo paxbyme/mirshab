@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import (
@@ -28,10 +29,19 @@ async def get_or_create_group(
 ) -> Group:
     group = await session.get(Group, group_id)
     if group is None:
-        group = Group(id=group_id, title=title, settings=default_group_settings())
-        session.add(group)
-        await session.flush()
-    elif title and group.title != title:
+        try:
+            # SAVEPOINT ichida — agar boshqa bir vaqtdagi sessiya shu guruhni
+            # allaqachon yaratayotgan bo'lsa, faqat shu blok rollback bo'ladi.
+            async with session.begin_nested():
+                group = Group(
+                    id=group_id, title=title, settings=default_group_settings()
+                )
+                session.add(group)
+                await session.flush()
+        except IntegrityError:
+            # Poygada yutqazdik — boshqa sessiya guruhni yaratib ulgurdi.
+            group = await session.get(Group, group_id)
+    if group is not None and title and group.title != title:
         group.title = title
     return group
 
@@ -65,15 +75,24 @@ async def get_or_create_user(
 ) -> User:
     user = await session.get(User, user_id)
     if user is None:
-        user = User(
-            id=user_id, username=username, first_name=first_name, is_bot=is_bot
-        )
-        session.add(user)
-        await session.flush()
-    else:
-        user.username = username
-        if first_name:
-            user.first_name = first_name
+        try:
+            async with session.begin_nested():
+                user = User(
+                    id=user_id,
+                    username=username,
+                    first_name=first_name,
+                    is_bot=is_bot,
+                )
+                session.add(user)
+                await session.flush()
+            return user
+        except IntegrityError:
+            # Poygada yutqazdik — boshqa sessiya yaratib ulgurdi.
+            user = await session.get(User, user_id)
+    # Mavjud (yoki poygada yutqazgan) foydalanuvchi — ma'lumotni yangilaymiz.
+    user.username = username
+    if first_name:
+        user.first_name = first_name
     return user
 
 
@@ -94,9 +113,14 @@ async def get_or_create_member(
 ) -> GroupMember:
     member = await get_member(session, group_id, user_id)
     if member is None:
-        member = GroupMember(group_id=group_id, user_id=user_id)
-        session.add(member)
-        await session.flush()
+        try:
+            async with session.begin_nested():
+                member = GroupMember(group_id=group_id, user_id=user_id)
+                session.add(member)
+                await session.flush()
+        except IntegrityError:
+            # Poygada yutqazdik — boshqa sessiya a'zoni yaratib ulgurdi.
+            member = await get_member(session, group_id, user_id)
     return member
 
 

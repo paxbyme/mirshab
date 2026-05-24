@@ -3,9 +3,57 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# asyncpg tushunmaydigan libpq-ga xos query parametrlari (Railway public URL'da uchraydi)
+_LIBPQ_ONLY_PARAMS = {"sslmode", "channel_binding", "gssencmode", "target_session_attrs"}
+# SSL talab qiladigan sslmode qiymatlari
+_SSL_REQUIRED = {"require", "verify-ca", "verify-full"}
+
+
+def normalize_db_url(url: str) -> str:
+    """DB URL'ini SQLAlchemy async-asyncpg uchun moslashtiradi.
+
+    Railway/Heroku `postgres://...` yoki `postgresql://...?sslmode=require`
+    beradi; asyncpg uchun `postgresql+asyncpg://` kerak va `sslmode` o'rniga
+    `ssl` ishlatiladi.
+    """
+    url = url.strip()
+    if not url:
+        return url
+
+    # 1) Drayver sxemasini to'g'rilash
+    if url.startswith("postgres://"):
+        url = "postgresql+asyncpg://" + url[len("postgres://") :]
+    elif url.startswith("postgresql://"):
+        url = "postgresql+asyncpg://" + url[len("postgresql://") :]
+
+    # 2) Postgres bo'lmasa — tegmaymiz (sqlite va h.k.)
+    if not url.startswith("postgresql+asyncpg://"):
+        return url
+
+    # 3) libpq-ga xos query paramlarni asyncpg tushunadiganiga o'tkazamiz
+    parts = urlsplit(url)
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    cleaned: list[tuple[str, str]] = []
+    needs_ssl = False
+    for key, value in query:
+        if key.lower() == "sslmode":
+            if value.lower() in _SSL_REQUIRED:
+                needs_ssl = True
+            continue  # sslmode'ni olib tashlaymiz
+        if key.lower() in _LIBPQ_ONLY_PARAMS:
+            continue
+        cleaned.append((key, value))
+    if needs_ssl and not any(k.lower() == "ssl" for k, _ in cleaned):
+        cleaned.append(("ssl", "require"))
+
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(cleaned), parts.fragment)
+    )
 
 
 class Settings(BaseSettings):
@@ -23,7 +71,11 @@ class Settings(BaseSettings):
     owner_ids: list[int] = Field(default_factory=list)
 
     # --- Ma'lumotlar bazasi ---
-    db_url: str = "sqlite+aiosqlite:///qoriqchi.db"
+    # `DB_URL` (yoki Railway/Heroku avtomatik beradigan `DATABASE_URL`) dan o'qiladi.
+    db_url: str = Field(
+        default="sqlite+aiosqlite:///mirshab.db",
+        validation_alias=AliasChoices("DB_URL", "DATABASE_URL"),
+    )
 
     # --- Redis (opsional) ---
     redis_url: str = ""
@@ -47,6 +99,11 @@ class Settings(BaseSettings):
     # --- Rasm NSFW / OCR (Faza 7) ---
     image_nsfw_enabled: bool = False
     ocr_enabled: bool = False
+
+    @field_validator("db_url", mode="after")
+    @classmethod
+    def _normalize_db_url(cls, v: str) -> str:
+        return normalize_db_url(v)
 
     @field_validator("owner_ids", mode="before")
     @classmethod

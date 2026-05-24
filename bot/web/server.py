@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 def create_app(session_factory: async_sessionmaker[AsyncSession]) -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="Qo'riqchi Dashboard", docs_url=None, redoc_url=None)
+    app = FastAPI(title="Mirshab Dashboard", docs_url=None, redoc_url=None)
 
     def _check_key(key: str) -> bool:
         return not settings.web_secret or key == settings.web_secret

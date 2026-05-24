@@ -1,5 +1,7 @@
 """crud uchun integratsion testlar (in-memory SQLite)."""
 
+import asyncio
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -48,6 +50,33 @@ async def test_whitelist_crud(session):
     items = await crud.list_whitelist(session, 1)
     assert items[0].pattern == "example.com"
     assert await crud.remove_whitelist(session, 1, "example.com") is True
+
+
+@pytest.mark.asyncio
+async def test_concurrent_group_create_no_crash(tmp_path):
+    """Bot guruhga qo'shilganda bir nechta update bir vaqtda kelib, har biri
+    o'z sessiyasida shu guruhni yaratmoqchi bo'ladi. Avval bu
+    `UNIQUE constraint failed: groups.id` xatosini berardi."""
+    url = f"sqlite+aiosqlite:///{tmp_path / 'race.db'}"
+    # busy timeout — bir nechta yozuvchi connection lock uchun kutib tursin
+    engine = create_async_engine(url, connect_args={"timeout": 30})
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def worker() -> int:
+        async with factory() as s:
+            g = await crud.get_or_create_group(s, 999, "race")
+            await s.commit()
+            return g.id
+
+    ids = await asyncio.gather(*(worker() for _ in range(8)))
+    assert set(ids) == {999}
+
+    async with factory() as s:
+        rows = await crud.all_groups(s)
+    assert len([r for r in rows if r.id == 999]) == 1
+    await engine.dispose()
 
 
 @pytest.mark.asyncio

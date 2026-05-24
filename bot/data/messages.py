@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 START_PRIVATE = (
-    "👋 <b>Salom! Men Qo'riqchi</b> — guruh moderator botiman.\n\n"
+    "👋 <b>Salom! Men Mirshab</b> — guruh moderator botiman.\n\n"
     "Men guruhingizni quyidagilardan himoya qilaman:\n"
     "🔗 Reklama va begona havolalar\n"
     "🔞 18+ kontent va shubhali kanallar\n"
@@ -18,12 +18,12 @@ START_PRIVATE = (
 )
 
 START_GROUP = (
-    "👋 Salom! Men <b>Qo'riqchi</b>. Guruhni himoya qilishga tayyorman.\n"
+    "👋 Salom! Men <b>Mirshab</b>. Guruhni himoya qilishga tayyorman.\n"
     "Meni administrator qiling va /settings orqali sozlang."
 )
 
 HELP = (
-    "<b>📖 Qo'riqchi — buyruqlar</b>\n\n"
+    "<b>📖 Mirshab — buyruqlar</b>\n\n"
     "<b>Hamma uchun:</b>\n"
     "/start — bot haqida\n"
     "/help — yordam\n\n"

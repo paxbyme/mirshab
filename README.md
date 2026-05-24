@@ -1,4 +1,4 @@
-# 🛡 Qo'riqchi — Telegram guruh moderator boti
+# 🛡 Mirshab — Telegram guruh moderator boti
 
 Ommaviy Telegram guruhlarni **reklama, 18+ kontent va spam**dan avtomatik
 himoya qiluvchi bot. Havolalarni o'chiradi, shubhali a'zolarni cheklaydi,
