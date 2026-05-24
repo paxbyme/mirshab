@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.data import messages as msg
 from bot.database import crud
-from bot.utils.helpers import mention_by_id, now_utc
+from bot.utils.helpers import mention_by_id, normalize_channel_id, now_utc
 from bot.utils.logger import logger
 
 # Mute paytida hamma narsa taqiqlanadi
@@ -132,6 +132,7 @@ async def log_action(
         message_text=message_text,
     )
 
+    log_channel_id = normalize_channel_id(log_channel_id)
     if not log_channel_id:
         return
     try:

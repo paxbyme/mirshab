@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from aiogram import Router
+from aiogram import Bot, Router
 from aiogram.enums import ChatType
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from bot.services.settings_cache import invalidate
 from bot.utils.helpers import (
     human_duration,
     mention_by_id,
+    normalize_channel_id,
     parse_duration,
     until_from_seconds,
     user_mention,
@@ -43,19 +45,33 @@ async def cmd_settings(message: Message, session: AsyncSession) -> None:
 
 @router.message(Command("setlog"))
 async def cmd_setlog(
-    message: Message, command: CommandObject, session: AsyncSession
+    message: Message, command: CommandObject, session: AsyncSession, bot: Bot
 ) -> None:
-    """Log kanal ID'sini o'rnatadi. Argument: channel_id (manfiy son)."""
+    """Log kanal ID'sini o'rnatadi. Argument: channel_id (yoki @username)."""
     arg = (command.args or "").strip()
     if not arg:
         await crud.update_group_settings(session, message.chat.id, log_channel_id=None)
         invalidate(message.chat.id)
         await message.answer("📋 Log kanal uzildi. Ulash uchun: <code>/setlog -100...</code>")
         return
+    channel_id = normalize_channel_id(arg)
+    if channel_id is None:
+        await message.answer(
+            "❌ Noto'g'ri ID. Masalan: <code>/setlog -1001234567890</code> "
+            "yoki <code>/setlog @kanal</code>"
+        )
+        return
+    # Saqlashdan oldin tekshiramiz — bot kanalga yoza oladimi?
     try:
-        channel_id = int(arg)
-    except ValueError:
-        await message.answer("❌ Noto'g'ri ID. Masalan: <code>/setlog -1001234567890</code>")
+        await bot.send_message(
+            channel_id, "✅ Mirshab log kanali ulandi.", disable_web_page_preview=True
+        )
+    except (TelegramBadRequest, TelegramForbiddenError) as e:
+        await message.answer(
+            f"⚠️ Bu kanalga yozib bo'lmadi: <code>{channel_id}</code>\n"
+            f"<i>{e.message}</i>\n\n"
+            "Botni kanalga <b>admin</b> qilib qo'shganingizni va ID to'g'riligini tekshiring."
+        )
         return
     await crud.update_group_settings(session, message.chat.id, log_channel_id=channel_id)
     invalidate(message.chat.id)

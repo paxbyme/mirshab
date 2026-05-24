@@ -27,6 +27,10 @@ _PUBLIC_COMMANDS = [
 
 
 async def _on_startup(bot: Bot) -> None:
+    # Webhookni o'chirib, kutilayotgan eski update'larni tashlaymiz — qayta
+    # deploy paytida instans toza "egallab oladi" va getUpdates konflikti
+    # (TelegramConflictError) tezroq bartaraf bo'ladi.
+    await bot.delete_webhook(drop_pending_updates=True)
     me = await bot.me()
     await bot.set_my_commands(_PUBLIC_COMMANDS)
     logger.info(f"Bot ishga tushdi: @{me.username} (id={me.id})")

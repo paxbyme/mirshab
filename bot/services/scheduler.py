@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from bot.data import messages as msg
 from bot.database import crud
 from bot.services import moderator
-from bot.utils.helpers import now_utc
+from bot.utils.helpers import normalize_channel_id, now_utc
 from bot.utils.logger import logger
 
 
@@ -34,7 +34,7 @@ async def _daily_report(
         groups = await crud.all_groups(session)
         for group in groups:
             settings = {**(group.settings or {})}
-            log_channel = settings.get("log_channel_id")
+            log_channel = normalize_channel_id(settings.get("log_channel_id"))
             if not log_channel:
                 continue
             daily = await crud.daily_stats(session, group.id)

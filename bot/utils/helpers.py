@@ -36,6 +36,37 @@ _DURATION_UNITS = {
 }
 
 
+def normalize_channel_id(value: int | str | None) -> int | str | None:
+    """Telegram kanal/superguruh ID'sini normallashtiradi.
+
+    - ``-100...`` ko'rinishidagi to'liq ID         => o'zgarmaydi
+    - prefikssiz musbat ID (masalan 3911652365)   => -1003911652365
+    - ``@username`` yoki ``t.me/username``         => '@username'
+    - None / bo'sh / noto'g'ri                     => None
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        if text.startswith("@"):
+            return text
+        if "t.me/" in text.lower():
+            uname = text.rstrip("/").split("/")[-1].lstrip("@")
+            return f"@{uname}" if uname else None
+        try:
+            value = int(text)
+        except ValueError:
+            return None
+    if value == 0:
+        return None
+    # Kanal/superguruh ID'lari -100... bo'ladi; prefikssiz musbat sonni tuzatamiz.
+    if value > 0:
+        return int(f"-100{value}")
+    return value
+
+
 def parse_duration(text: str | None) -> int | None:
     """`10m`, `2h`, `1d`, `30` (daqiqa) ko'rinishidagi muddatni soniyaga aylantiradi.
 
