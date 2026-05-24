@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Qo'riqchi{% endblock %}</title>
+  <style>
+    :root { --bg:#0f1117; --card:#1a1d27; --txt:#e6e8ef; --muted:#8b90a0; --accent:#4f8cff; --danger:#ff5f6d; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+           background:var(--bg); color:var(--txt); }
+    header { padding:18px 24px; background:var(--card); border-bottom:1px solid #262a37;
+             display:flex; align-items:center; gap:10px; }
+    header h1 { font-size:18px; margin:0; }
+    .wrap { max-width:1000px; margin:24px auto; padding:0 16px; }
+    table { width:100%; border-collapse:collapse; background:var(--card); border-radius:10px; overflow:hidden; }
+    th, td { padding:10px 14px; text-align:left; border-bottom:1px solid #262a37; font-size:14px; }
+    th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:12px; letter-spacing:.5px; }
+    tr:hover td { background:#222633; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:12px; background:#262a37; }
+    .danger { color:var(--danger); }
+    .muted { color:var(--muted); }
+    .cards { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
+    .stat { background:var(--card); border-radius:10px; padding:16px 20px; min-width:120px; }
+    .stat .n { font-size:26px; font-weight:700; }
+    .stat .l { color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+  <header><span style="font-size:22px">🛡</span><h1>Qo'riqchi — Dashboard</h1></header>
+  <div class="wrap">{% block content %}{% endblock %}</div>
+</body>
+</html>

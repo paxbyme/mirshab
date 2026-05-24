@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Guruhlar — Qo'riqchi{% endblock %}
+{% block content %}
+  <h2>Guruhlar ({{ groups|length }})</h2>
+  {% if not groups %}
+    <p class="muted">Hozircha hech qanday guruh qo'shilmagan.</p>
+  {% else %}
+  <table>
+    <thead>
+      <tr><th>Guruh</th><th>A'zolar</th><th>Ban</th><th>24s o'chirilgan</th><th>24s warn</th><th>24s ban</th></tr>
+    </thead>
+    <tbody>
+      {% for g in groups %}
+      <tr>
+        <td><a href="/group/{{ g.id }}?key={{ key }}">{{ g.title }}</a><br><span class="muted">{{ g.id }}</span></td>
+        <td>{{ g.members }}</td>
+        <td class="danger">{{ g.banned }}</td>
+        <td>{{ g.deleted }}</td>
+        <td>{{ g.warns }}</td>
+        <td>{{ g.bans }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+{% endblock %}

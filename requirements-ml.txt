@@ -1,0 +1,10 @@
+# Faza 7 — og'ir ML/OCR paketlari (opsional).
+# Bu fayl alohida o'rnatiladi, chunki paketlar katta (model yuklab oladi).
+#   pip install -r requirements-ml.txt
+#
+# Bularsiz ham bot to'liq ishlaydi — rasm-asosli NSFW va OCR avtomatik o'chadi.
+
+nudenet==3.4.2          # rasm/video NSFW detection
+pillow==10.4.0          # rasmlarni qayta ishlash
+pytesseract==0.3.13     # OCR (tizimda `tesseract` binari ham kerak)
+scikit-learn==1.5.2     # oddiy spam classifier

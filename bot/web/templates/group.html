@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Guruh {{ group_id }} — Qo'riqchi{% endblock %}
+{% block content %}
+  <p><a href="/?key={{ key }}">← Orqaga</a></p>
+  <h2>Guruh <span class="muted">{{ group_id }}</span></h2>
+  <div class="cards">
+    <div class="stat"><div class="n">{{ daily.get('delete', 0) }}</div><div class="l">🗑 O'chirilgan (24s)</div></div>
+    <div class="stat"><div class="n">{{ daily.get('warn', 0) }}</div><div class="l">⚠️ Ogohlantirish</div></div>
+    <div class="stat"><div class="n">{{ daily.get('mute', 0) }}</div><div class="l">🔇 Mute</div></div>
+    <div class="stat"><div class="n">{{ daily.get('ban', 0) }}</div><div class="l">🔨 Ban</div></div>
+  </div>
+  <h3>Oxirgi harakatlar</h3>
+  {% if not logs %}
+    <p class="muted">Harakatlar yo'q.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Vaqt</th><th>Harakat</th><th>User</th><th>Sabab</th><th>Matn</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="muted">{{ log.time }}</td>
+        <td><span class="badge">{{ log.action }}</span></td>
+        <td>{{ log.user_id or '—' }}</td>
+        <td>{{ log.reason }}</td>
+        <td class="muted">{{ log.text }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+{% endblock %}

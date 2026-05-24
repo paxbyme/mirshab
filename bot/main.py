@@ -1,0 +1,103 @@
+"""Qo'riqchi botini ishga tushirish — entry point."""
+
+from __future__ import annotations
+
+import asyncio
+
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.types import BotCommand
+
+from bot.config import get_settings
+from bot.database import engine as db_engine
+from bot.handlers import get_routers
+from bot.middlewares import DbSessionMiddleware, ThrottlingMiddleware
+from bot.services.antiflood import FloodController
+from bot.services.scheduler import setup_scheduler
+from bot.utils.logger import logger, setup_logging
+
+_PUBLIC_COMMANDS = [
+    BotCommand(command="start", description="Bot haqida"),
+    BotCommand(command="help", description="Yordam / buyruqlar"),
+    BotCommand(command="settings", description="Sozlamalar (admin)"),
+    BotCommand(command="stats", description="Statistika (admin)"),
+    BotCommand(command="logs", description="Moderatsiya tarixi (admin)"),
+]
+
+
+async def _on_startup(bot: Bot) -> None:
+    me = await bot.me()
+    await bot.set_my_commands(_PUBLIC_COMMANDS)
+    logger.info(f"Bot ishga tushdi: @{me.username} (id={me.id})")
+
+
+async def run() -> None:
+    settings = get_settings()
+    setup_logging(settings.log_level)
+    logger.info("Qo'riqchi ishga tushmoqda...")
+
+    # --- DB ---
+    session_factory = db_engine.create_session_factory(settings.db_url)
+    await db_engine.init_models()  # dev/SQLite uchun; prod'da Alembic
+    logger.info(f"Ma'lumotlar bazasi tayyor ({'sqlite' if settings.is_sqlite else 'postgres'})")
+
+    # --- Bot & Dispatcher ---
+    bot = Bot(
+        token=settings.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+    dp = Dispatcher()
+
+    # --- Middlewares ---
+    # DB sessiya — barcha update turlari uchun (outer)
+    dp.update.outer_middleware(DbSessionMiddleware(session_factory))
+    # Anti-flood — faqat xabarlar uchun
+    flood = FloodController(
+        window_seconds=settings.flood_window_seconds,
+        max_messages=settings.flood_max_messages,
+        redis_url=settings.redis_url,
+    )
+    dp.message.middleware(ThrottlingMiddleware(flood))
+
+    # --- Routerlar ---
+    for router in get_routers():
+        dp.include_router(router)
+
+    # --- Scheduler ---
+    scheduler = setup_scheduler(bot, session_factory)
+
+    # --- Web dashboard (Faza 7, opsional) ---
+    web_task: asyncio.Task | None = None
+    if settings.web_enabled:
+        try:
+            from bot.web.server import start_web
+
+            web_task = asyncio.create_task(start_web(session_factory))
+            logger.info(f"Web dashboard: http://{settings.web_host}:{settings.web_port}")
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Web dashboard ishga tushmadi: {e}")
+
+    dp.startup.register(_on_startup)
+
+    try:
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    finally:
+        logger.info("To'xtatilmoqda...")
+        scheduler.shutdown(wait=False)
+        if web_task:
+            web_task.cancel()
+        await flood.close()
+        await bot.session.close()
+        await db_engine.dispose_engine()
+
+
+def main() -> None:
+    try:
+        asyncio.run(run())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot to'xtatildi.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,23 @@
+# Qo'riqchi — global qora ro'yxat (domen / kanal pattern'lari)
+# Bu yerdagi domenlar BARCHA guruhlarda taqiqlanadi (guruh blacklist'idan tashqari).
+# Har bir guruh o'z qora ro'yxatini /blacklist orqali qo'sha oladi.
+# '#' — izoh. Bo'sh qatorlar e'tiborsiz. Domen kichik harfda.
+
+# --- 18+ saytlar (namunalar) ---
+pornhub.com
+xvideos.com
+xnxx.com
+xhamster.com
+redtube.com
+onlyfans.com
+
+# --- Qimor / betting (namunalar) ---
+1xbet.com
+1win.com
+melbet.com
+
+# --- URL qisqartiruvchilar (ko'pincha reklama/yashirin link) ---
+# Izoh: agar guruhda ruxsat bermoqchi bo'lsangiz, whitelist'ga qo'shing.
+bit.ly
+tinyurl.com
+goo.gl

@@ -1,0 +1,39 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Compose ichida postgres/redis xizmatlariga ulanish
+      DB_URL: postgresql+asyncpg://qoriqchi:${POSTGRES_PASSWORD:-qoriqchi}@db:5432/qoriqchi
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./logs:/app/logs
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qoriqchi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qoriqchi}
+      POSTGRES_DB: qoriqchi
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qoriqchi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+volumes:
+  pgdata:

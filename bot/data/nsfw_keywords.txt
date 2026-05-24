@@ -1,0 +1,58 @@
+# Qo'riqchi — 18+ / nomaqbul kontent kalit so'zlar lug'ati
+# Format:  so'z|til|severity
+#   til: uz / ru / en
+#   severity: 1 = shubhali (log + ogohlantirish)
+#             2 = aniq (o'chirish + warning)
+#             3 = qattiq (o'chirish + darhol ban)
+# '#' bilan boshlangan qatorlar — izoh. Bo'sh qatorlar e'tiborsiz.
+# So'zlar kichik harfda yoziladi; tekshiruv harf registriga sezgir emas.
+
+# ---- Ingliz tili ----
+porn|en|3
+porno|en|3
+xxx|en|3
+sex video|en|3
+sexcam|en|3
+nudes|en|3
+onlyfans|en|2
+escort|en|2
+hookup|en|2
+adult content|en|2
+18+|en|2
+nsfw|en|1
+sext|en|2
+camgirl|en|3
+
+# ---- Rus tili ----
+порно|ru|3
+порнуха|ru|3
+секс видео|ru|3
+интим|ru|2
+проститутк|ru|3
+шлюх|ru|3
+голые|ru|2
+эротик|ru|2
+вебкам|ru|3
+интим услуги|ru|3
+секс знакомства|ru|3
+
+# ---- O'zbek tili ----
+seks video|uz|3
+porno video|uz|3
+yalang'och|uz|2
+buzuq qiz|uz|3
+intim xizmat|uz|3
+kechki qiz|uz|3
+seks uchun|uz|3
+
+# ---- Reklama / spam signallari (severity 1-2) ----
+тест заработок|ru|1
+быстрый заработок|ru|2
+casino|en|2
+kazino|uz|2
+казино|ru|2
+ставки|ru|2
+1xbet|en|2
+betting|en|2
+loan|en|1
+kredit onlayn|uz|1
