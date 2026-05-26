@@ -27,7 +27,7 @@ router = Router(name="callbacks")
 
 
 @router.callback_query(F.data.startswith(f"{CAPT_PREFIX}:"))
-async def on_captcha_answer(query: CallbackQuery) -> None:
+async def on_captcha_answer(query: CallbackQuery, session: AsyncSession) -> None:
     parts = (query.data or "").split(":")
     if len(parts) != 3:
         await query.answer()
@@ -56,9 +56,14 @@ async def on_captcha_answer(query: CallbackQuery) -> None:
         if query.message:
             await moderator.delete_message(bot, chat_id, query.message.message_id)
         await query.answer("✅")
+        # Tasdiqdan o'tgach — endi mention qilib, guruh qoidalari bilan tanishtiramiz
+        gs = await get_cached_settings(session, chat_id)
+        rules = (gs.get("welcome_text") or "").strip() or msg.WELCOME_DEFAULT
         try:
             await bot.send_message(
-                chat_id, msg.CAPTCHA_OK.format(user=user_mention(query.from_user))
+                chat_id,
+                f"{msg.CAPTCHA_OK}\n\n"
+                f"{rules.format(user=user_mention(query.from_user))}",
             )
         except Exception:  # noqa: BLE001
             pass
