@@ -71,11 +71,11 @@ BOT_KICKED = "🤖 Ruxsatsiz qo'shilgan bot ({name}) chetlatildi."
 
 # --- CAPTCHA / yangi a'zo ---
 CAPTCHA_PROMPT = (
-    "👋 Xush kelibsiz, {user}!\n\n"
+    "👋 Xush kelibsiz, {name}!\n\n"
     "Siz odam ekanligingizni tasdiqlang — quyidagi tugmani <b>{timeout} soniya</b> "
     "ichida bosing. Aks holda guruhdan chiqarilasiz."
 )
-CAPTCHA_OK = "✅ Rahmat, {user}! Guruhga xush kelibsiz. 🎉"
+CAPTCHA_OK = "✅ Tasdiqdan muvaffaqiyatli o'tdingiz!"
 CAPTCHA_FAIL_KICK = "⏱ {user} CAPTCHA'ni o'tmadi va chetlatildi."
 CAPTCHA_WRONG_USER = "Bu tugma siz uchun emas."
 WELCOME_DEFAULT = "🎉 Xush kelibsiz, {user}! Guruh qoidalariga rioya qiling."

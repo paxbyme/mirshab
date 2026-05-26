@@ -19,7 +19,7 @@ from bot.services import moderator
 from bot.services.captcha import captcha_manager
 from bot.services.optional_features import scan_profile_photo
 from bot.services.settings_cache import get_cached_settings
-from bot.utils.helpers import until_from_seconds, user_mention
+from bot.utils.helpers import until_from_seconds, user_mention, user_name
 from bot.utils.logger import logger
 
 router = Router(name="new_member")
@@ -229,7 +229,7 @@ async def _start_captcha(
     try:
         sent = await bot.send_message(
             chat_id,
-            f"{msg.CAPTCHA_PROMPT.format(user=user_mention(user), timeout=timeout)}\n\n"
+            f"{msg.CAPTCHA_PROMPT.format(name=user_name(user), timeout=timeout)}\n\n"
             f"❓ <b>{question}</b>",
             reply_markup=kb,
         )
