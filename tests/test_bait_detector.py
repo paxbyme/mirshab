@@ -26,6 +26,35 @@ def test_dating_with_lure_is_banned():
     assert analyze(text).severity == 3
 
 
+def test_channel_signal_lure_is_banned():
+    # Havolasiz "trading kanaliga jalb" janri (signal + kanalga chaqiriq)
+    text = (
+        "Men sizlarga dalil beraman, avvalo borib signalni tekshirib ko'ring, "
+        "bir oy tekshirib ko'ring, agar sizlarga kanalim yoqmasa, albatta "
+        "qo'shila olmaysiz."
+    )
+    v = analyze(text)
+    assert v.severity == 3
+    assert {"channel_lure", "finance"} <= set(v.categories)
+    assert is_bait(text)
+
+
+def test_crypto_channel_lure_is_banned():
+    v = analyze("Kripto bo'yicha bepul signallar, kanalimga obuna bo'ling")
+    assert v.severity == 3
+    assert {"channel_lure", "finance"} <= set(v.categories)
+
+
+def test_finance_word_alone_not_flagged():
+    # "signal" yolg'iz (internet konteksti) — ban ham, log ham emas
+    assert analyze("Uyda internet signali umuman yo'q").severity == 0
+
+
+def test_channel_mention_alone_not_banned():
+    # Kanalga oddiy ishora, moliyaviy o'lja yo'q — ban emas
+    assert analyze("Senga kanalim yoqdimi?").severity < 3
+
+
 def test_clean_message_not_flagged():
     assert analyze("Salom, bugun ob-havo qanday?").severity == 0
 
