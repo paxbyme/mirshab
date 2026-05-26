@@ -7,6 +7,12 @@ havola yoki ochiq 18+ so'z ishlatmaydi — buning o'rniga odamni o'z profiliga
     "O'zimga yubka olmoqchi edim... haddan tashqari ochiq emasmi...
      Foto profilimda, halol fikring kerak 💞"
 
+Shuningdek, havolasiz "trading kanaliga jalb" janrini ham qoplaydi — soxta
+signal/kripto kanallariga undaydigan xabarlar:
+
+    "Men sizlarga dalil beraman, avvalo signalni tekshirib ko'ring...
+     agar kanalim yoqmasa, qo'shila olmaysiz."
+
 Strategiya: bir nechta "yumshoq" signal toifasini birlashtiramiz. Hech bir
 toifa yolg'iz holda ban sababi bo'lmaydi — aynan kombinatsiya (ayniqsa
 *profilga ishora* + yana bir signal) bu janrni haqiqiy suhbatdan ajratadi va
@@ -28,17 +34,21 @@ DM_CTA = "dm_cta"             # shaxsiyga yozishga undash
 OPINION = "opinion"           # "fikringizni / baho bering"
 SUGGESTIVE = "suggestive"     # ochiq kiyim / tana / "juda ochiqmi"
 EMOJI = "emoji"               # flirt emojilari
+CHANNEL_LURE = "channel_lure" # kanalga / obunaga / qo'shilishga jalb (asosiy "ilmoq")
+FINANCE = "finance"           # signal / trading / kripto / tez boyish o'ljasi
 
 # Bir o'ljani anglatadigan toifalar (oddiy gap-so'zda kam uchraydi)
-_ANCHORS = {PROFILE_REF, DATING, DM_CTA}
+_ANCHORS = {PROFILE_REF, DATING, DM_CTA, CHANNEL_LURE}
 
 # Diagnostika uchun toifa og'irliklari (qaror toifalar to'plamiga asoslanadi)
 _WEIGHTS = {
     PROFILE_REF: 0.5,
     DATING: 0.4,
+    CHANNEL_LURE: 0.4,
     DM_CTA: 0.3,
     OPINION: 0.25,
     SUGGESTIVE: 0.25,
+    FINANCE: 0.25,
     EMOJI: 0.15,
 }
 
@@ -108,6 +118,34 @@ _SIGNALS: dict[str, list[str]] = {
         "слишком откровенно", "откровенно", "вырез", "коротк", "купальник",
         "фигур", "тело моё", "тело мое", "вульгарно", "пошло ли",
     ],
+    CHANNEL_LURE: [
+        # uz — o'z kanaliga / obunaga / qo'shilishga chaqirish
+        "kanalimga", "kanalimda", "kanalimni", "kanalim", "mening kanalim",
+        "kanalga qoshil", "kanalga azo", "kanalga obuna", "kanalga oting",
+        "kanalga kiring", "kanalga otib", "obuna boling", "obuna bol",
+        "azo boling", "qoshila olmaysiz", "qoshila olasiz", "qoshiling",
+        "qoshilib oling", "linkka oting", "havola pastda", "havolam profilda",
+        # ru
+        "мой канал", "на канал", "в канал", "подпишись", "подпишитесь",
+        "подписывайтесь", "вступай", "вступайте", "вступить в канал",
+        "переходи на канал", "переходите на канал", "ссылка на канал",
+        # ru lotin-translit
+        "moy kanal", "podpishis", "podpishites", "podpisivaytes",
+        "vstupayte", "vstupay", "perehodi na kanal",
+    ],
+    FINANCE: [
+        # uz — signal / trading / kripto / tez boyish
+        "signal", "treyding", "trading", "treyd", "investitsiya", "investor",
+        "investitsi", "daromad", "pul ishla", "pul topi", "tez boyi",
+        "boyib ket", "kripto", "bitcoin", "forex", "stavka", "bukmeker",
+        "kazino", "depozit", "garov tik",
+        # ru
+        "сигнал", "трейдинг", "трейд", "инвестиц", "доход", "заработок",
+        "заработат", "крипто", "биткоин", "форекс", "ставк", "казино",
+        "депозит", "прибыл",
+        # ru lotin-translit
+        "treyding", "investici", "zarabotok", "stavki", "kazino", "depozit",
+    ],
 }
 
 # Flirt emojilari (raw matnda tekshiriladi)
@@ -168,10 +206,16 @@ def analyze(text: str | None) -> BaitVerdict:
     # --- Qaror ---
     # Profilga ishora bu janrning "qotil" signali: u + yana bir signal => ban.
     # Tanishuv o'ljasi + aniq ilmoq (ochiq kiyim / shaxsiyga yoz / profil) => ban.
+    # Kanalga jalb + moliyaviy o'lja (signal/kripto) yoki shaxsiyga undash => ban
+    # ("signalni tekshir, kanalimga qo'shiling" kabi soxta trading kanallari).
     profile_combo = PROFILE_REF in cats and (cats - {PROFILE_REF})
     dating_combo = DATING in cats and (cats & {SUGGESTIVE, DM_CTA, PROFILE_REF})
+    lure_combo = (
+        (CHANNEL_LURE in cats and cats & {FINANCE, DM_CTA, PROFILE_REF})
+        or (FINANCE in cats and cats & {CHANNEL_LURE, DM_CTA})
+    )
 
-    if profile_combo or dating_combo:
+    if profile_combo or dating_combo or lure_combo:
         verdict.severity = 3
     elif (
         PROFILE_REF in cats
