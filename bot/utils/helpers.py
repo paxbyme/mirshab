@@ -19,11 +19,6 @@ def user_mention(user: User) -> str:
     return f'<a href="tg://user?id={user.id}">{name}</a>'
 
 
-def user_name(user: User) -> str:
-    """Foydalanuvchi ismini oddiy (linksiz, ping'siz) HTML-xavfsiz matn qaytaradi."""
-    return html.escape(user.full_name or str(user.id))
-
-
 def mention_by_id(user_id: int, name: str | None = None) -> str:
     """user_id bo'yicha HTML mention."""
     label = html.escape(name) if name else str(user_id)
